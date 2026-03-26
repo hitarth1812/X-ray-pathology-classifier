@@ -1,9 +1,5 @@
-# DLGenAI NPPE 1 – Report
+# Multi-Label Chest X-Ray Pathology Classification using EfficientNet-B0 with Asymmetric Loss Report
 
-**Name:** Hitarth Khatiwala 
-**Roll Number:** 24f2001535
-
----
 
 ## 1. Introduction
 
