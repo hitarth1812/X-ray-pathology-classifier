@@ -393,6 +393,40 @@ CUSTOM_CSS = """
   --line: #d6e3f3;
 }
 
+.dark {
+  --bg-1: #0b0f19;
+  --bg-2: #111827;
+  --ink: #f3f4f6;
+  --muted: #9ca3af;
+  --panel: rgba(17, 24, 39, 0.88);
+  --line: #374151;
+}
+
+.dark .banner {
+  border-color: #9a3412;
+  background: #431407;
+  color: #fed7aa;
+}
+
+.dark .badge {
+  background: #1f2937;
+  color: #60a5fa;
+  border-color: #374151;
+}
+
+.dark #upload_zone {
+  background: rgba(17, 24, 39, 0.92);
+  border-color: #4b5563;
+}
+
+.dark .pct {
+  color: #e5e7eb;
+}
+
+.dark .bar-shell {
+  background: #374151;
+}
+
 .gradio-container {
   background:
     radial-gradient(circle at 10% 5%, rgba(43, 108, 176, 0.14), transparent 45%),
