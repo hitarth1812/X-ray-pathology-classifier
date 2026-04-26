@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Model weights (large binary files — provide via env var or HF Hub)
+*.pt
+*.pth
+*.ckpt
+
+# Cache directories
+.cache/
+.gradio/
+
+# Temp report files
+xray_report_*.pdf
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editors
+.vscode/
+.idea/
