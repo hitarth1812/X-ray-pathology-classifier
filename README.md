@@ -12,6 +12,8 @@ pinned: false
 
 # Chest X-Ray Multi-Label Pathology Classifier (Simulation)
 
+👉 **[Live Simulation / Demo on Hugging Face Spaces](https://huggingface.co/spaces/hitarth1812/chest-xray-classifier)**
+
 Single-page Gradio web app for multi-label chest X-ray inference with EfficientNet-B0 + sigmoid probabilities.
 
 ## Features
