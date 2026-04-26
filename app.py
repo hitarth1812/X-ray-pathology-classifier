@@ -278,10 +278,10 @@ def on_analyze(file_input, threshold: float):
     return html, confidences, cam_image, gr.update(visible=True)
 
 
-def on_threshold_change(threshold: float, cached_confidences: Dict[str, float]):
+def on_threshold_change(threshold: float, cached_confidences):
     if CONFIG.get("prediction_mode") == "argmax":
         return gr.update()
-    if not cached_confidences:
+    if not cached_confidences:  # handles both None and {}
         return "<div class='empty-th'>Run analysis to see results.</div>"
     return _render_results_html(cached_confidences, threshold)
 
@@ -293,9 +293,9 @@ def on_sample_click():
     return on_file_change(SAMPLE_IMAGE_PATH)
 
 
-def on_download_report(file_input, cached_confidences: Dict[str, float], threshold: float):
+def on_download_report(file_input, cached_confidences, threshold: float):
     """Generate PDF and return as a temporary file for gr.File download."""
-    if not cached_confidences:
+    if not cached_confidences:  # handles both None and {}
         raise gr.Error("Run analysis first before downloading the report.")
     file_path = _normalize_file_path(file_input) or ""
     pdf_buf = generate_report(file_path, cached_confidences, threshold)
@@ -562,7 +562,7 @@ with gr.Blocks(title="Chest X-Ray Multi-Label Classifier", css=CUSTOM_CSS) as de
                     gr.Markdown("### Inference Results (Sorted by Confidence)")
                     results_html = gr.HTML("<div class='empty-th'>Run analysis to see results.</div>")
 
-            cache_state = gr.State({})
+            cache_state = gr.State(None)  # {} breaks gradio_client JSON schema parser; None is safe
 
             image_file.change(
                 on_file_change,
