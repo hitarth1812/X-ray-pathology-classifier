@@ -227,13 +227,13 @@ def _render_batch_html(
 def _make_preview(file_input):
     file_path = _normalize_file_path(file_input)
     if not file_path:
-        return None
+        return None, "Path is empty"
     try:
         image = Image.open(file_path).convert("L")
-    except Exception:
-        return None
+    except Exception as e:
+        return None, f"Image.open failed: {e}"
     image.thumbnail((300, 300))
-    return image
+    return image, None
 
 
 def on_file_change(file_path):
@@ -246,9 +246,9 @@ def on_file_change(file_path):
     except gr.Error as exc:
         raise gr.Error(str(exc))
 
-    preview = _make_preview(validated_path)
+    preview, err = _make_preview(validated_path)
     if preview is None:
-        raise gr.Error("Could not read image preview. Please upload a valid image file.")
+        raise gr.Error(f"Could not read image preview. Please upload a valid image file. Details: {err}")
 
     size = os.path.getsize(validated_path)
     file_name = os.path.basename(validated_path)
