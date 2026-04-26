@@ -1,3 +1,14 @@
+---
+title: Chest X-ray Classifier
+emoji: 🫁
+colorFrom: blue
+colorTo: red
+sdk: gradio
+sdk_version: 5.0.1
+app_file: app.py
+pinned: false
+---
+
 # Chest X-Ray Multi-Label Pathology Classifier (Simulation)
 
 Single-page Gradio web app for multi-label chest X-ray inference with EfficientNet-B0 + sigmoid probabilities.
