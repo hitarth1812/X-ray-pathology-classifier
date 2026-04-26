@@ -502,7 +502,7 @@ CUSTOM_CSS = """
 # UI
 # ---------------------------------------------------------------------------
 
-with gr.Blocks(title="Chest X-Ray Multi-Label Classifier") as demo:
+with gr.Blocks(title="Chest X-Ray Multi-Label Classifier", css=CUSTOM_CSS) as demo:
     gr.HTML(
         """
         <div class='banner'>
@@ -645,5 +645,4 @@ if __name__ == "__main__":
     demo.launch(
         server_name="0.0.0.0",
         server_port=int(os.getenv("PORT", "7860")),
-        css=CUSTOM_CSS,
     )
