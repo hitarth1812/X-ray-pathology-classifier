@@ -1,1 +1,2 @@
 *.jpg filter=lfs diff=lfs merge=lfs -text
+best_model[[:space:]](1).pt filter=lfs diff=lfs merge=lfs -text
