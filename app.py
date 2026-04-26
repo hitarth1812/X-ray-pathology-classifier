@@ -645,4 +645,5 @@ if __name__ == "__main__":
     demo.launch(
         server_name="0.0.0.0",
         server_port=int(os.getenv("PORT", "7860")),
+        show_api=False,   # suppresses /info endpoint; avoids gradio_client JSON schema bug
     )
