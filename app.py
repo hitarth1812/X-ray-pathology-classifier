@@ -5,8 +5,8 @@ import tempfile
 from pathlib import Path
 from typing import Dict, List, Optional
 
-# ── Compatibility shim ────────────────────────────────────────────────────────
-# Gradio 5.0–5.6 imports HfFolder from huggingface_hub in gradio/oauth.py.
+# ── Compatibility shim: HfFolder ──────────────────────────────────────────────
+# Gradio imports HfFolder from huggingface_hub in gradio/oauth.py.
 # HF Spaces pre-installs huggingface_hub >= 0.30 which removed HfFolder.
 # Injecting a minimal shim BEFORE importing gradio restores the attribute so
 # the import chain succeeds regardless of which versions the platform chose.
@@ -23,6 +23,37 @@ if not hasattr(_hf_hub, "HfFolder"):
         def delete_token(cls) -> None:
             pass
     _hf_hub.HfFolder = _HfFolderShim
+
+# ── Compatibility shim: gradio_client boolean schema bug ──────────────────────
+# gradio_client.utils._json_schema_to_python_type crashes when it encounters
+# "additionalProperties": true/false (a boolean) in a JSON schema.  It tries
+# to recurse into the boolean and calls get_type(True), which does
+# `if "const" in schema:` — TypeError because `in` doesn't work on bools.
+# This comes from Gradio's own FileData Pydantic model and affects ALL
+# Gradio 4.x / 5.x versions.  We monkey-patch the two broken functions
+# BEFORE importing gradio so the schema parser never crashes.
+import gradio_client.utils as _gc_utils
+
+_orig_json_schema_to_python_type = _gc_utils._json_schema_to_python_type
+_orig_get_type = _gc_utils.get_type
+
+
+def _patched_get_type(schema):
+    """Handle the case where schema is a bool instead of a dict."""
+    if isinstance(schema, bool):
+        return "Any"
+    return _orig_get_type(schema)
+
+
+def _patched_json_schema_to_python_type(schema, defs=None):
+    """Handle bool schemas before recursing."""
+    if isinstance(schema, bool):
+        return "Any"
+    return _orig_json_schema_to_python_type(schema, defs)
+
+
+_gc_utils.get_type = _patched_get_type
+_gc_utils._json_schema_to_python_type = _patched_json_schema_to_python_type
 # ─────────────────────────────────────────────────────────────────────────────
 
 import gradio as gr
