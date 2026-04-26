@@ -5,6 +5,26 @@ import tempfile
 from pathlib import Path
 from typing import Dict, List, Optional
 
+# ── Compatibility shim ────────────────────────────────────────────────────────
+# Gradio 5.0–5.6 imports HfFolder from huggingface_hub in gradio/oauth.py.
+# HF Spaces pre-installs huggingface_hub >= 0.30 which removed HfFolder.
+# Injecting a minimal shim BEFORE importing gradio restores the attribute so
+# the import chain succeeds regardless of which versions the platform chose.
+import huggingface_hub as _hf_hub
+if not hasattr(_hf_hub, "HfFolder"):
+    class _HfFolderShim:
+        @staticmethod
+        def get_token():
+            return _hf_hub.utils._headers.get_token() if hasattr(_hf_hub, "utils") else None
+        @staticmethod
+        def save_token(token: str) -> None:
+            pass
+        @classmethod
+        def delete_token(cls) -> None:
+            pass
+    _hf_hub.HfFolder = _HfFolderShim
+# ─────────────────────────────────────────────────────────────────────────────
+
 import gradio as gr
 from PIL import Image
 
