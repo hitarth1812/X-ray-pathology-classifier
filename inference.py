@@ -175,7 +175,13 @@ def predict_image(image_path: str) -> Dict[str, float]:
         output = model(tensor)
         probs = output[0].cpu().numpy().tolist()
 
-    return {label: float(score) for label, score in zip(CLASSES, probs)}
+    confidences = {label: float(score) for label, score in zip(CLASSES, probs)}
+    
+    # Derive "No Finding" score based on the max score of all other diseases
+    max_disease_score = max(score for label, score in confidences.items() if label != "No Finding")
+    confidences["No Finding"] = max(0.0, 1.0 - max_disease_score)
+
+    return confidences
 
 
 def predict_with_cam(
@@ -211,8 +217,14 @@ def predict_with_cam(
 
     confidences = {label: float(score) for label, score in zip(CLASSES, probs)}
 
+    # Derive "No Finding" score based on the max score of all other diseases
+    max_disease_score = max(score for label, score in confidences.items() if label != "No Finding")
+    confidences["No Finding"] = max(0.0, 1.0 - max_disease_score)
+
     if class_index is None:
-        class_index = int(max(range(len(probs)), key=lambda i: probs[i]))
+        # Find the max class index using the corrected confidences
+        top_label = max(confidences.keys(), key=lambda k: confidences[k])
+        class_index = CLASSES.index(top_label)
 
     # Grad-CAM requires gradients; generate_cam handles enable_grad internally.
     cam_image = generate_cam(
