@@ -9,8 +9,8 @@ __pycache__/
 venv/
 env/
 
-# Model weights (large binary files — provide via env var or HF Hub)
-*.pt
+# Model weights (tracked via Git LFS in the Space repo)
+# *.pt  ← intentionally not ignored so best_model.pt is committed
 *.pth
 *.ckpt
 
