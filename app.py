@@ -320,12 +320,54 @@ def on_threshold_change(threshold: float, cached_confidences):
     return _render_results_html(cached_confidences, threshold)
 
 
-def on_sample_click():
-    """Load the bundled sample X-ray and store its path in active_path_state."""
+def on_sample_click(threshold: float):
+    """
+    One-shot sample handler: populate the upload zone, show preview,
+    run inference AND generate Grad-CAM — all in a single click.
+    Returns 10 values covering every output component.
+    """
+    from gradcam import generate_cam  # local import
+
     if not Path(SAMPLE_IMAGE_PATH).exists():
         raise gr.Error("Sample image not found. Add static/sample_xray.jpg to the repo.")
-    # on_file_change now returns 5 values including the validated path
-    return on_file_change(SAMPLE_IMAGE_PATH)
+
+    # Build preview
+    preview, err = _make_preview(SAMPLE_IMAGE_PATH)
+    if preview is None:
+        raise gr.Error(f"Could not read sample image: {err}")
+
+    size = os.path.getsize(SAMPLE_IMAGE_PATH)
+    meta_md = (
+        f"**File:** sample_xray.jpg  \n"
+        f"**Size:** {_format_size(size)}  \n"
+        "**Preview mode:** Grayscale"
+    )
+
+    # Run full inference + GradCAM
+    try:
+        confidences, cam_image = predict_with_cam(SAMPLE_IMAGE_PATH)
+    except FileNotFoundError as exc:
+        raise gr.Error(
+            "Model weights are not configured. Place best_model.pt in the project root "
+            "or set MODEL_HF_REPO_ID / MODEL_GITHUB_URL before running app.py."
+        ) from exc
+    except Exception as exc:
+        raise gr.Error(f"Inference failed: {exc}") from exc
+
+    html = _render_results_html(confidences, threshold)
+
+    return (
+        gr.update(value=SAMPLE_IMAGE_PATH),  # image_file  — populate the upload zone
+        preview,                              # preview_out
+        preview,                              # result_preview
+        meta_md,                              # meta_out
+        gr.update(interactive=True),          # analyze_btn
+        SAMPLE_IMAGE_PATH,                    # active_path_state
+        html,                                 # results_html
+        confidences,                          # cache_state
+        cam_image,                            # cam_out
+        gr.update(visible=True),              # report_btn
+    )
 
 
 def on_download_report(active_path: Optional[str], cached_confidences, threshold: float):
@@ -642,8 +684,20 @@ with gr.Blocks(title="Chest X-Ray Multi-Label Classifier", css=CUSTOM_CSS) as de
 
             sample_btn.click(
                 on_sample_click,
-                inputs=[],
-                outputs=[preview_out, result_preview, meta_out, analyze_btn, active_path_state],
+                inputs=[threshold],
+                outputs=[
+                    image_file,        # populate the upload drop-zone
+                    preview_out,
+                    result_preview,
+                    meta_out,
+                    analyze_btn,
+                    active_path_state,
+                    results_html,
+                    cache_state,
+                    cam_out,
+                    report_btn,
+                ],
+                show_progress="full",
             )
 
             analyze_btn.click(
