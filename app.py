@@ -270,7 +270,8 @@ def _make_preview(file_input):
 def on_file_change(file_path):
     normalized_path = _normalize_file_path(file_path)
     if not normalized_path:
-        return None, None, "", gr.update(interactive=False)
+        # Return 5 values: preview_out, result_preview, meta_md, analyze_btn update, active_path_state
+        return None, None, "", gr.update(interactive=False), None
 
     try:
         validated_path = _validate_extension(normalized_path)
@@ -288,13 +289,15 @@ def on_file_change(file_path):
         f"**Size:** {_format_size(size)}  \n"
         "**Preview mode:** Grayscale"
     )
-    return preview, preview, meta_md, gr.update(interactive=True)
+    # Return validated_path as the 5th value to store in active_path_state
+    return preview, preview, meta_md, gr.update(interactive=True), validated_path
 
 
-def on_analyze(file_input, threshold: float):
+def on_analyze(active_path: Optional[str], threshold: float):
     """Run inference + Grad-CAM. Returns (html, cache, cam_image, pdf_btn_update)."""
-    file_path = _normalize_file_path(file_input)
-    validated_path = _validate_extension(file_path)
+    if not active_path:
+        raise gr.Error("No image loaded. Upload an X-ray or click 'Try Sample X-Ray' first.")
+    validated_path = _validate_extension(active_path)
     try:
         confidences, cam_image = predict_with_cam(validated_path)
     except FileNotFoundError as exc:
@@ -318,17 +321,18 @@ def on_threshold_change(threshold: float, cached_confidences):
 
 
 def on_sample_click():
-    """Load the bundled sample X-ray."""
+    """Load the bundled sample X-ray and store its path in active_path_state."""
     if not Path(SAMPLE_IMAGE_PATH).exists():
         raise gr.Error("Sample image not found. Add static/sample_xray.jpg to the repo.")
+    # on_file_change now returns 5 values including the validated path
     return on_file_change(SAMPLE_IMAGE_PATH)
 
 
-def on_download_report(file_input, cached_confidences, threshold: float):
+def on_download_report(active_path: Optional[str], cached_confidences, threshold: float):
     """Generate PDF and return as a temporary file for gr.File download."""
     if not cached_confidences:  # handles both None and {}
         raise gr.Error("Run analysis first before downloading the report.")
-    file_path = _normalize_file_path(file_input) or ""
+    file_path = active_path or ""
     pdf_buf = generate_report(file_path, cached_confidences, threshold)
 
     # Write to a named temp file so Gradio can serve it.
@@ -627,23 +631,24 @@ with gr.Blocks(title="Chest X-Ray Multi-Label Classifier", css=CUSTOM_CSS) as de
                     gr.Markdown("### Inference Results (Sorted by Confidence)")
                     results_html = gr.HTML("<div class='empty-th'>Run analysis to see results.</div>")
 
-            cache_state = gr.State(None)  # {} breaks gradio_client JSON schema parser; None is safe
+            cache_state = gr.State(None)        # {} breaks gradio_client JSON schema parser; None is safe
+            active_path_state = gr.State(None)   # Tracks the currently loaded image path (upload OR sample)
 
             image_file.change(
                 on_file_change,
                 inputs=[image_file],
-                outputs=[preview_out, result_preview, meta_out, analyze_btn],
+                outputs=[preview_out, result_preview, meta_out, analyze_btn, active_path_state],
             )
 
             sample_btn.click(
                 on_sample_click,
                 inputs=[],
-                outputs=[preview_out, result_preview, meta_out, analyze_btn],
+                outputs=[preview_out, result_preview, meta_out, analyze_btn, active_path_state],
             )
 
             analyze_btn.click(
                 on_analyze,
-                inputs=[image_file, threshold],
+                inputs=[active_path_state, threshold],
                 outputs=[results_html, cache_state, cam_out, report_btn],
                 show_progress="full",
             )
@@ -656,7 +661,7 @@ with gr.Blocks(title="Chest X-Ray Multi-Label Classifier", css=CUSTOM_CSS) as de
 
             report_btn.click(
                 on_download_report,
-                inputs=[image_file, cache_state, threshold],
+                inputs=[active_path_state, cache_state, threshold],
                 outputs=[report_file],
             )
 
