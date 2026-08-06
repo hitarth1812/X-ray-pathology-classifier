@@ -1,6 +1,5 @@
 ---
 title: Chest X-ray Classifier
-emoji: 🫁
 colorFrom: blue
 colorTo: red
 sdk: gradio
