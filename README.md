@@ -115,6 +115,5 @@ Open the local Gradio URL shown in terminal (typically `http://127.0.0.1:7860`).
 4. Verify the Space build log shows the model loaded successfully.
 
 ## Notes
-
 - This is a simulation/research demo.
 - Not for clinical diagnosis or medical decision making.
