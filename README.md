@@ -76,13 +76,6 @@ The app resolves weights in this order:
 2. Hugging Face Hub (`MODEL_HF_REPO_ID` + optional `MODEL_HF_FILENAME`)
 3. GitHub Release direct URL (`MODEL_GITHUB_URL`)
 
-### Example (Hugging Face Hub)
-
-```powershell
-$env:MODEL_HF_REPO_ID="your-org/your-model-repo"
-$env:MODEL_HF_FILENAME="best_model.pt"
-python app.py
-```
 
 ### Example (GitHub Release)
 
